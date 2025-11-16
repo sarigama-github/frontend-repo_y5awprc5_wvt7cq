@@ -1,26 +1,72 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import Landing from './components/Landing'
+import GameCatchHearts from './components/GameCatchHearts'
+import Question from './components/Question'
+import GamePopBalloons from './components/GamePopBalloons'
+import FinalConfession from './components/FinalConfession'
+
+const screens = {
+  LANDING: 'LANDING',
+  GAME1: 'GAME1',
+  Q1: 'Q1',
+  GAME2: 'GAME2',
+  Q2: 'Q2',
+  FINAL: 'FINAL',
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [screen, setScreen] = useState(screens.LANDING)
+
+  const next = (to) => () => setScreen(to)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen">
+      <AnimatePresence mode="wait">
+        {screen === screens.LANDING && (
+          <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <Landing onStart={next(screens.GAME1)} />
+          </motion.div>
+        )}
+
+        {screen === screens.GAME1 && (
+          <motion.div key="game1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.4 }}>
+            <GameCatchHearts onComplete={next(screens.Q1)} />
+          </motion.div>
+        )}
+
+        {screen === screens.Q1 && (
+          <motion.div key="q1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.35 }}>
+            <Question
+              title="How was your day?"
+              options={["Amazing ✨", "Pretty good 😊", "Okay 🫶", "Could be better 😴"]}
+              onAnswer={next(screens.GAME2)}
+            />
+          </motion.div>
+        )}
+
+        {screen === screens.GAME2 && (
+          <motion.div key="game2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.4 }}>
+            <GamePopBalloons onComplete={next(screens.Q2)} />
+          </motion.div>
+        )}
+
+        {screen === screens.Q2 && (
+          <motion.div key="q2" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.35 }}>
+            <Question
+              title="Do you know why I made this for you?"
+              options={["Because I'm special? 🥰", "Because you like me? 😉", "Because you care 💞", "All of the above! 🌟"]}
+              onAnswer={next(screens.FINAL)}
+            />
+          </motion.div>
+        )}
+
+        {screen === screens.FINAL && (
+          <motion.div key="final" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <FinalConfession />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
