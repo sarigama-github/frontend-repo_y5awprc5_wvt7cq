@@ -1,76 +1,89 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const CREATURES = ['🐣', '🦊', '🐱', '🐢', '🐰', '🐸', '🦄', '⭐️']
+
 export default function GameCatchHearts({ onComplete }) {
-  const containerRef = useRef(null)
-  const [hearts, setHearts] = useState([])
-  const [score, setScore] = useState(0)
+  const [sprites, setSprites] = useState([])
+  const [caught, setCaught] = useState(0)
   const target = 7
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setHearts((prev) => [
+    const spawn = () => {
+      setSprites((prev) => [
         ...prev,
         {
           id: Math.random().toString(36).slice(2),
-          x: Math.random() * 85 + 5, // percent
-          size: Math.random() * 24 + 24,
+          x: Math.random() * 80 + 10, // percent
+          size: Math.random() * 20 + 28,
           speed: Math.random() * 2 + 2,
+          emoji: CREATURES[Math.floor(Math.random() * CREATURES.length)],
+          dir: Math.random() > 0.5 ? 'up' : 'down',
+          delay: Math.random() * 1.2,
         },
       ])
-    }, 600)
+    }
+    const interval = setInterval(spawn, 650)
     return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
-    if (score >= target) {
-      setTimeout(() => onComplete(), 600)
+    if (caught >= target) {
+      const id = setTimeout(() => onComplete(), 700)
+      return () => clearTimeout(id)
     }
-  }, [score, onComplete])
+  }, [caught, onComplete])
 
   const handleCatch = (id) => {
-    setHearts((prev) => prev.filter((h) => h.id !== id))
-    setScore((s) => s + 1)
+    setSprites((prev) => prev.filter((s) => s.id !== id))
+    setCaught((s) => s + 1)
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-pink-100 to-rose-100 flex flex-col items-center justify-center overflow-hidden p-6">
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.6),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.5),transparent_40%)]" />
+    <div className="relative min-h-screen bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,.7),transparent_45%),radial-gradient(ellipse_at_bottom_right,rgba(255,255,255,.6),transparent_45%)] from-pink-100 to-rose-100 bg-gradient-to-b flex flex-col items-center justify-center overflow-hidden p-6">
+      <div className="absolute inset-0 pointer-events-none" />
 
-      <div className="relative z-10 w-full max-w-md">
-        <h2 className="text-center text-rose-600 text-2xl font-bold">Catch the Hearts</h2>
-        <p className="text-center text-rose-500 mt-1">Tap to catch {target} hearts ♥</p>
-        <div className="mt-4 flex items-center justify-center gap-3">
-          <span className="text-rose-600 font-semibold">Score:</span>
-          <span className="text-rose-700 font-bold text-xl">{score}</span>
+      <div className="relative z-10 w-full max-w-md text-center">
+        <h2 className="text-rose-600 text-2xl font-extrabold">Catch the Pocket Creatures</h2>
+        <p className="text-rose-500 mt-1">Tap to catch {target} cuties ✨</p>
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-200/60 bg-white/60 backdrop-blur-md px-4 py-1 shadow-sm">
+          <span className="text-rose-600 font-semibold">Caught</span>
+          <span className="text-rose-700 font-bold text-xl">{caught}</span>
+          <span className="text-rose-400">/ {target}</span>
         </div>
       </div>
 
-      <div ref={containerRef} className="relative z-10 mt-6 h-[60vh] w-full max-w-md rounded-2xl bg-white/70 backdrop-blur-md border border-white/60 overflow-hidden shadow-xl">
+      <div className="relative z-10 mt-6 h-[60vh] w-full max-w-md rounded-2xl bg-white/70 backdrop-blur-xl border border-white/60 overflow-hidden shadow-[0_20px_60px_-25px_rgba(244,63,94,0.35)]">
         <AnimatePresence>
-          {hearts.map((h) => (
+          {sprites.map((s) => (
             <motion.button
-              key={h.id}
-              onClick={() => handleCatch(h.id)}
-              initial={{ y: -50, opacity: 0 }}
-              animate={{ y: ['-10%', '110%'], opacity: [1, 1] }}
-              exit={{ opacity: 0, scale: 0.7 }}
-              transition={{ duration: 4 / h.speed, ease: 'linear' }}
+              key={s.id}
+              onClick={() => handleCatch(s.id)}
+              initial={{ y: s.dir === 'up' ? '110%' : '-10%', opacity: 0 }}
+              animate={{
+                y: s.dir === 'up' ? ['110%', '-10%'] : ['-10%', '110%'],
+                opacity: [1, 1],
+                x: [`${s.x}%`, `${s.x + (Math.random() * 6 - 3)}%`, `${s.x}%`],
+              }}
+              exit={{ scale: 0.6, opacity: 0 }}
+              transition={{ duration: 4 / s.speed, delay: s.delay, ease: 'easeInOut' }}
               className="absolute"
-              style={{ left: `${h.x}%` }}
+              style={{ left: `${s.x}%` }}
             >
-              <span
-                className="select-none"
-                style={{ fontSize: h.size }}
-                role="img"
-                aria-label="heart"
-              >
-                💖
+              <span className="relative inline-block select-none" style={{ fontSize: s.size }}>
+                <motion.span
+                  className="absolute -inset-2 rounded-full bg-rose-400/0"
+                  animate={{ boxShadow: ['0 0 0 0 rgba(244,63,94,0)', '0 0 0 12px rgba(244,63,94,0.08)', '0 0 0 0 rgba(244,63,94,0)'] }}
+                  transition={{ repeat: Infinity, duration: 1.8 }}
+                />
+                <span role="img" aria-label="creature">{s.emoji}</span>
               </span>
             </motion.button>
           ))}
         </AnimatePresence>
       </div>
+
+      <div className="relative z-10 mt-4 text-xs text-rose-500/70">Tip: multiple creatures move at once — be quick!</div>
     </div>
   )
 }
